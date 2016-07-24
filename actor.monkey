@@ -16,6 +16,8 @@ Class Actor
 	' 装備武器
 	' 0: 拳銃 1: ショットガン 2: マチェット
 	Field equip
+	' ショットガンの弾数
+	Field ammo
 	' 飛び散りX座標
 	Field xs:Int[36]
 	' 飛び散りY座標
@@ -31,6 +33,7 @@ Class Actor
 	
 	Method New()
 		equip = 1
+		ammo = 8
 		For Local i = 0 To 35
 			xspeed[i] = Rnd(-10, 10)
 			yspeed[i] = Rnd(-10, 10)

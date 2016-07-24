@@ -10,6 +10,10 @@ Class Game Extends App
 	Field actor:Actor
 	Field counter:Int
 	Field handgun:Sound
+	Field shotgun:Sound
+	Field doubleKill:Sound
+	Field tripleKill:Sound
+	Field multiKill:Sound
 	Field roar:Sound
 	Field zombies:=New Zombie[200]
 	Field zombieDie1:Image
@@ -29,8 +33,12 @@ Class Game Extends App
 		actorDie2=LoadImage("image/player1.png", 8, 8, 36)
 		blood=LoadImage("image/blood.png")
 		handgun=LoadSound("audio/se/handgun.wav")
+		shotgun=LoadSound("audio/se/shotgun.wav")
 		roar=LoadSound("audio/se/zombie.wav")
 		shout=LoadSound("audio/se/gameover.wav")
+		doubleKill=LoadSound("audio/se/doublekill.wav")
+		tripleKill=LoadSound("audio/se/triplekill.wav")
+		multiKill=LoadSound("audio/se/multikill.wav")
 		counter = 0
 		PlayMusic("audio/bgm/battle.ogg", 1)
 		Init()
@@ -88,6 +96,7 @@ Class Game Extends App
 				actor.x = 20
 				actor.y = 202 
 				scene = 2
+				Return
 			End
 		End
 		If scene = 2
@@ -133,27 +142,66 @@ Class Game Extends App
 			
 			If KeyHit(KEY_Z) Or KeyHit(KEY_SPACE)
 				If actor.shot = 0
-					PlaySound(handgun)
-					actor.shot = 3
-					' ゾンビの当たり判定
-					Local px = actor.x + 24
-					Local py = actor.y + 25
-					Local qx = 0
-					Local qy = py
-					If actor.d = 0
-						qx = px - 160
-					Else
-						qx = px + 160
+					Local killCount = 0
+					If actor.equip = 0
+						PlaySound(handgun)
+						actor.shot = 3
+						' ゾンビの当たり判定
+						Local px = actor.x + 24
+						Local py = actor.y + 25
+						Local qx = 0
+						Local qy = py
+						If actor.d = 0
+							qx = px - 160
+						Else
+							qx = px + 160
+						End
+						
+						For Local i = 0 To 199
+							If zombies[i].s = 0
+								If ZombieHit(zombies[i], px, py, qx, qy)
+									zombies[i].s = 1
+									PlaySound(roar, 1)
+									killCount = killCount + 1
+								End
+							End
+						Next
+					Elseif actor.equip = 1
+						PlaySound(shotgun)
+						actor.shot = 20
+						' ゾンビの当たり判定
+						For Local i = 0 To 199
+							If zombies[i].s = 0
+								If actor.d = 0
+									If HitBox(actor.x - 196, actor.y - 64, actor.x, actor.y + 64, zombies[i].x, zombies[i].y, zombies[i].x + 48, zombies[i].y + 48)
+										zombies[i].s = 1
+										PlaySound(roar, 1)
+										killCount = killCount + 1
+									End
+								Else
+									If HitBox(actor.x, actor.y - 64, actor.x + 196, actor.y + 64, zombies[i].x, zombies[i].y, zombies[i].x + 48, zombies[i].y + 48)
+										zombies[i].s = 1
+										PlaySound(roar, 1)
+										killCount = killCount + 1
+									End
+								End
+							End
+						Next
+						
+						actor.ammo = actor.ammo - 1
+						If actor.ammo < 1
+							actor.equip = 0
+						End
 					End
 					
-					For Local i = 0 To 199
-						If zombies[i].s = 0
-							If ZombieHit(zombies[i], px, py, qx, qy)
-								zombies[i].s = 1
-								PlaySound(roar, 1)
-							End
-						End
-					Next
+					' キルカウントのサウンド
+					If killCount = 2
+						PlaySound(doubleKill, 2)
+					Elseif killCount = 3
+						PlaySound(tripleKill, 2)
+					Elseif killCount > 3
+						PlaySound(multiKill, 2)
+					End
 				End
 			End
 			
@@ -433,7 +481,11 @@ Class Game Extends App
 						DrawImage(chip, actor.x + 40, actor.y + 24, 8)
 					End
 					If actor.shot > 0
-						DrawImage(chip, actor.x + 49, actor.y + 24, 16)
+						If actor.equip = 0
+							DrawImage(chip, actor.x + 49, actor.y + 24, 16)
+						Elseif actor.equip = 1
+							DrawImage(chip, actor.x + 62, actor.y + 13, 18)
+						End
 					End
 				Else
 					If actor.equip = 0
@@ -442,7 +494,11 @@ Class Game Extends App
 						DrawImage(chip, actor.x - 16, actor.y + 24, 9)
 					End
 					If actor.shot > 0
-						DrawImage(chip, actor.x - 1 - 9, actor.y + 24, 17)
+						If actor.equip = 0
+							DrawImage(chip, actor.x - 1 - 9, actor.y + 24, 17)
+						Elseif actor.equip = 1
+							DrawImage(chip, actor.x - 16 - 22, actor.y + 13, 19)
+						End
 					End
 				End
 			Else
@@ -455,7 +511,11 @@ Class Game Extends App
 							DrawImage(chip, actor.x - 5840 + 40, actor.y + 24, 8)
 						End
 						If actor.shot > 0
-							DrawImage(chip, actor.x - 5840 + 49, actor.y + 24, 16)
+							If actor.equip = 0
+								DrawImage(chip, actor.x - 5840 + 49, actor.y + 24, 16)
+							Elseif actor.equip = 1
+								DrawImage(chip, actor.x - 5840 + 62, actor.y + 13, 18)
+							End
 						End
 					Else
 						If actor.equip = 0
@@ -464,7 +524,11 @@ Class Game Extends App
 							DrawImage(chip, actor.x - 5840 - 16, actor.y + 24, 9)
 						End
 						If actor.shot > 0
-							DrawImage(chip, actor.x - 5840 - 1 - 9, actor.y + 24, 17)
+							If actor.equip = 0
+								DrawImage(chip, actor.x - 5840 - 1 - 9, actor.y + 24, 17)
+							Elseif actor.equip = 1
+								DrawImage(chip, actor.x - 5840 - 16 - 22, actor.y + 13, 19)
+							End
 						End
 					End
 				Else
@@ -476,7 +540,11 @@ Class Game Extends App
 							DrawImage(chip, 296 + 40, actor.y + 24, 8)
 						End
 						If actor.shot > 0
-							DrawImage(chip, 296 + 49, actor.y + 24, 16)
+							If actor.equip = 0
+								DrawImage(chip, 296 + 49, actor.y + 24, 16)
+							Elseif actor.equip = 1
+								DrawImage(chip, 296 + 62, actor.y + 13, 18)
+							End
 						End
 					Else
 						If actor.equip = 0
@@ -485,7 +553,11 @@ Class Game Extends App
 							DrawImage(chip, 296 - 16, actor.y + 24, 9)
 						End
 						If actor.shot > 0
-							DrawImage(chip, 296 - 1 - 9, actor.y + 24, 17)
+							If actor.equip = 0
+								DrawImage(chip, 296 - 1 - 9, actor.y + 24, 17)
+							Elseif actor.equip = 1
+								DrawImage(chip, 296 - 16 - 22, actor.y + 13, 19)
+							End
 						End
 					End
 				End
