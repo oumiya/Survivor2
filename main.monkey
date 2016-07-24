@@ -1,86 +1,7 @@
 Import mojo
 Import mojo.input
-
-Class Actor
-	Field d
-	Field x
-	Field y
-	Field a
-	Field s
-	Field shot
-	Field xs:Int[36]
-	Field ys:Int[36]
-	Field bxs:Int[36]
-	Field bys:Int[36]
-	Field xspeed:Int[36]
-	Field yspeed:Int[36]
-	
-	Method New()
-		For Local i = 0 To 35
-			xspeed[i] = Rnd(-10, 10)
-			yspeed[i] = Rnd(-10, 10)
-		Next
-	End
-	
-	Method SetUp()
-		Local n = 0
-		Local j = 0
-		
-		For Local i = 0 To 35
-			xs[i] = Self.x + n * 8
-			ys[i] = Self.y + j
-			n = n + 1
-			If n > 5
-				n = 0
-				j = j + 8
-			End
-			bxs[i] = xs[i]
-			bys[i] = ys[i]
-		Next
-	End
-End
-
-Class Zombie
-	Field d
-	Field x
-	Field y
-	Field a
-	Field c
-	Field s
-	Field rd
-	Field xs:Int[36]
-	Field ys:Int[36]
-	Field bxs:Int[36]
-	Field bys:Int[36]
-	Field xspeed:Int[36]
-	Field yspeed:Int[36]
-	
-	Method New()
-		For Local i = 0 To 35
-			xspeed[i] = Rnd(-10, 10)
-			yspeed[i] = Rnd(-10, 10)
-		Next
-	End	
-	
-	Method SetUp()
-		Local n = 0
-		Local j = 0
-		
-		For Local i = 0 To 35
-			xs[i] = Self.x + n * 8
-			ys[i] = Self.y + j
-			n = n + 1
-			If n > 5
-				n = 0
-				j = j + 8
-			End
-			bxs[i] = xs[i]
-			bys[i] = ys[i]
-		Next
-		
-		Self.c = Self.c + 1
-	End
-End
+Import actor
+Import zombie
 
 Class Game Extends App
 	Field map:Image
@@ -506,12 +427,20 @@ Class Game Extends App
 			If actor.x < 296
 				DrawImage(chip, actor.x, actor.y, actor.a)
 				If actor.d = 1
-					DrawImage(chip, actor.x + 40, actor.y + 25, 6)
+					If actor.equip = 0
+						DrawImage(chip, actor.x + 40, actor.y + 25, 6)
+					Elseif actor.equip = 1
+						DrawImage(chip, actor.x + 40, actor.y + 24, 8)
+					End
 					If actor.shot > 0
 						DrawImage(chip, actor.x + 49, actor.y + 24, 16)
 					End
 				Else
-					DrawImage(chip, actor.x - 1, actor.y + 25, 7)
+					If actor.equip = 0
+						DrawImage(chip, actor.x - 1, actor.y + 25, 7)
+					Elseif actor.equip = 1
+						DrawImage(chip, actor.x - 16, actor.y + 24, 9)
+					End
 					If actor.shot > 0
 						DrawImage(chip, actor.x - 1 - 9, actor.y + 24, 17)
 					End
@@ -520,12 +449,20 @@ Class Game Extends App
 				If actor.x >= 6136
 					DrawImage(chip, actor.x - 5840, actor.y, actor.a)
 					If actor.d = 1
-						DrawImage(chip, actor.x - 5840 + 40, actor.y + 25, 6)
+						If actor.equip = 0
+							DrawImage(chip, actor.x - 5840 + 40, actor.y + 25, 6)
+						Elseif actor.equip = 1
+							DrawImage(chip, actor.x - 5840 + 40, actor.y + 24, 8)
+						End
 						If actor.shot > 0
 							DrawImage(chip, actor.x - 5840 + 49, actor.y + 24, 16)
 						End
 					Else
-						DrawImage(chip, actor.x - 5840 - 1, actor.y + 25, 7)
+						If actor.equip = 0
+							DrawImage(chip, actor.x - 5840 - 1, actor.y + 25, 7)
+						Elseif actor.equip = 1
+							DrawImage(chip, actor.x - 5840 - 16, actor.y + 24, 9)
+						End
 						If actor.shot > 0
 							DrawImage(chip, actor.x - 5840 - 1 - 9, actor.y + 24, 17)
 						End
@@ -533,12 +470,20 @@ Class Game Extends App
 				Else
 					DrawImage(chip, 296, actor.y, actor.a)
 					If actor.d = 1
-						DrawImage(chip, 296 + 40, actor.y + 25, 6)
+						If actor.equip = 0
+							DrawImage(chip, 296 + 40, actor.y + 25, 6)
+						Elseif actor.equip = 1
+							DrawImage(chip, 296 + 40, actor.y + 24, 8)
+						End
 						If actor.shot > 0
 							DrawImage(chip, 296 + 49, actor.y + 24, 16)
 						End
 					Else
-						DrawImage(chip, 296 - 1, actor.y + 25, 7)
+						If actor.equip = 0
+							DrawImage(chip, 296 - 1, actor.y + 25, 7)
+						Elseif actor.equip = 1
+							DrawImage(chip, 296 - 16, actor.y + 24, 9)
+						End
 						If actor.shot > 0
 							DrawImage(chip, 296 - 1 - 9, actor.y + 24, 17)
 						End
