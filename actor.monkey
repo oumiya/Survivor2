@@ -32,8 +32,8 @@ Class Actor
 	Field yspeed:Int[36]
 	
 	Method New()
-		equip = 1
-		ammo = 8
+		equip = 0
+		ammo = 0
 		For Local i = 0 To 35
 			xspeed[i] = Rnd(-10, 10)
 			yspeed[i] = Rnd(-10, 10)

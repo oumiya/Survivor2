@@ -1,12 +1,15 @@
 Import mojo
 Import mojo.input
+Import monkey.math
 Import actor
 Import zombie
+Import item
 
 Class Game Extends App
 	Field map:Image
 	Field chip:Image
 	Field scene#
+	Field score#
 	Field actor:Actor
 	Field counter:Int
 	Field handgun:Sound
@@ -20,9 +23,12 @@ Class Game Extends App
 	Field zombieDie2:Image
 	Field actorDie1:Image
 	Field actorDie2:Image
+	Field items:=New Item[5]
+	Field itemidx#
 	Field blood:Image
 	Field dieCount
 	Field shout:Sound
+	Field numbers:Image
 	
 	Method OnCreate()
 		map=LoadImage("image/map.png")
@@ -32,6 +38,7 @@ Class Game Extends App
 		actorDie1=LoadImage("image/player0.png", 8, 8, 36)
 		actorDie2=LoadImage("image/player1.png", 8, 8, 36)
 		blood=LoadImage("image/blood.png")
+		numbers=LoadImage("image/number.png", 24, 48, 10)
 		handgun=LoadSound("audio/se/handgun.wav")
 		shotgun=LoadSound("audio/se/shotgun.wav")
 		roar=LoadSound("audio/se/zombie.wav")
@@ -47,6 +54,7 @@ Class Game Extends App
 	Method Init()
 		Seed = GetDate[5]
 		SetUpdateRate(60)
+		score = 0
 		scene = 1
 		actor = New Actor
 		actor.a = 3
@@ -85,6 +93,14 @@ Class Game Extends App
 				End
 			Forever
 			zombies[i].SetUp
+		Next
+		
+		' アイテムの初期化
+		itemidx = 0
+		For Local i = 0 To 4
+			items[i] = New Item
+			items[i].x = 0
+			items[i].y = 0
 		Next
 	End
 	
@@ -163,6 +179,18 @@ Class Game Extends App
 									zombies[i].s = 1
 									PlaySound(roar, 1)
 									killCount = killCount + 1
+									
+									Local drop = Rnd(1, 200)
+									If drop > 150
+										items[itemidx].x = zombies[i].x
+										items[itemidx].y = zombies[i].y
+										items[itemidx].v = 1
+										items[itemidx].c = 300
+										itemidx = itemidx + 1
+										If itemidx > 4
+											itemidx = 0
+										End
+									End
 								End
 							End
 						Next
@@ -177,12 +205,36 @@ Class Game Extends App
 										zombies[i].s = 1
 										PlaySound(roar, 1)
 										killCount = killCount + 1
+										Local drop = Rnd(1, 200)
+									
+										If drop > 190
+											items[itemidx].x = zombies[i].x
+											items[itemidx].y = zombies[i].y
+											items[itemidx].v = 1
+											items[itemidx].c = 300
+											itemidx = itemidx + 1
+											If itemidx > 4
+												itemidx = 0
+											End
+										End
 									End
 								Else
 									If HitBox(actor.x, actor.y - 64, actor.x + 196, actor.y + 64, zombies[i].x, zombies[i].y, zombies[i].x + 48, zombies[i].y + 48)
 										zombies[i].s = 1
 										PlaySound(roar, 1)
 										killCount = killCount + 1
+										Local drop = Rnd(1, 200)
+									
+										If drop > 190
+											items[itemidx].x = zombies[i].x
+											items[itemidx].y = zombies[i].y
+											items[itemidx].v = 1
+											items[itemidx].c = 300
+											itemidx = itemidx + 1
+											If itemidx > 4
+												itemidx = 0
+											End
+										End
 									End
 								End
 							End
@@ -197,10 +249,15 @@ Class Game Extends App
 					' キルカウントのサウンド
 					If killCount = 2
 						PlaySound(doubleKill, 2)
+						score = score + 250
 					Elseif killCount = 3
 						PlaySound(tripleKill, 2)
+						score = score + 500
 					Elseif killCount > 3
 						PlaySound(multiKill, 2)
+						score = score + 2000
+					Elseif killCount = 1
+						score = score + 50
 					End
 				End
 			End
@@ -344,6 +401,24 @@ Class Game Extends App
 					Next
 				End
 			Next
+			
+			' アイテム
+			For Local i = 0 To 4
+				If items[i].v = 1
+					items[i].c = items[i].c - 1
+					If items[i].c <= 0
+						items[i].c = 0
+						items[i].v = 0
+					End
+					' アイテムの当たり判定
+					If HitBox(items[i].x, items[i].y, items[i].x+48, items[i].y+48, actor.x + 16, actor.y+16, actor.x+34, actor.y+34)
+						actor.equip = 1
+						actor.ammo = actor.ammo + 8
+						items[i].c = 0
+						items[i].v = 0
+					End
+				End
+			Next
 		End
 		If scene = 3
 			' 死に中
@@ -436,8 +511,8 @@ Class Game Extends App
 					DrawImage(map, mapx, 0, 0, 1, 1)
 				End
 			End
-			
-			' ゾンビの描画
+
+			' ゾンビの死体の描画
 			For Local i = 0 To 199
 				If zombies[i].s = 1
 					For Local j = 0 To 35
@@ -445,8 +520,16 @@ Class Game Extends App
 						DrawImage(zombieDie1, zombies[i].xs[j] + mapx, zombies[i].ys[j], j)
 					Next
 				End
+			Next			
+			
+			' アイテムの描画
+			For Local i = 0 To 4
+				If items[i].v = 1
+					DrawImage(chip, items[i].x + mapx, items[i].y, 25)
+				End
 			Next
 			
+			' ゾンビの描画			
 			For Local i = 0 To 199
 				If zombies[i].s = 0
 					If zombies[i].d = 0
@@ -563,9 +646,61 @@ Class Game Extends App
 				End
 			End
 
-			DrawText("X:" + actor.x, 0, 0)
-			DrawText("Y:" + actor.y, 0, 13)
-			DrawText("MAP-X:" + mapx, 0, 26)
+			' スコアの描画
+			DrawImage(chip, 0, 14, 58)
+			DrawImage(chip, 48, 14, 59)
+			' 6桁
+			Local nx = 192
+			Local ny = 6
+			Local nidx = 0
+			' 1桁目表示
+			nx = 216
+			nidx = Floor(score Mod 10)
+			DrawImage(numbers, nx, ny, nidx)
+			' 2桁目表示
+			nx = 192
+			nidx = Floor(score / 10)
+			nidx = nidx Mod 10
+			DrawImage(numbers, nx, ny, nidx)
+			' 3桁目表示
+			nx = 168
+			nidx = Floor(score / 100)
+			nidx = nidx Mod 10
+			DrawImage(numbers, nx, ny, nidx)
+			' 4桁目表示
+			nx = 144
+			nidx = Floor(score / 1000)
+			nidx = nidx Mod 10
+			DrawImage(numbers, nx, ny, nidx)
+			' 5桁目
+			nx = 120
+			nidx = Floor(score / 10000)
+			nidx = nidx Mod 10
+			DrawImage(numbers, nx, ny, nidx)
+			' 6桁目
+			nx = 96
+			nidx = Floor(score / 100000)
+			nidx = nidx Mod 10
+			DrawImage(numbers, nx, ny, nidx)
+			
+			' 弾薬の描画
+			If actor.equip = 1
+				' 弾丸アイコンの描画
+				DrawImage(chip, 0, 48, 68)
+				' 2桁
+				Local nax = 192
+				Local nay = 64
+				Local naidx = 0
+				' 1桁目表示
+				nax = 64
+				naidx = Floor(actor.ammo Mod 10)
+				DrawImage(numbers, nax, nay, naidx)
+				' 2桁目表示
+				nax = 38
+				naidx = Floor(actor.ammo / 10)
+				naidx = naidx Mod 10
+				DrawImage(numbers, nax, nay, naidx)
+			End
 		End
 		
 		If scene = 3
